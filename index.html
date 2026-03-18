@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KT's Kanji Flashcards</title>
+    <style>
+        :root {
+            --easy: #d4edda; --mid: #fff3cd; --hard: #f8d7da;
+            --easy-dark: #28a745; --mid-dark: #ffc107; --hard-dark: #dc3545;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .stats { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-box { padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; border: 2px solid transparent; }
+        .stat-box.active { border-color: #333; }
+        
+        /* Flashcard Styles */
+        .card-container { width: 350px; height: 450px; perspective: 1000px; margin-bottom: 20px; }
+        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+        .card.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); padding: 20px; box-sizing: border-box; text-align: center; }
+        .card-front { background: white; border: 4px solid #333; }
+        .card-back { background: #f9f9f9; transform: rotateY(180deg); border: 4px solid #333; }
+        
+        .kanji { font-size: 100px; margin: 0; }
+        .reading { font-size: 18px; color: #555; margin: 10px 0; }
+        .meaning { font-size: 24px; font-weight: bold; color: #333; }
+        
+        .controls { display: flex; gap: 10px; }
+        button { padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:hover { opacity: 0.8; }
+        .btn-easy { background: var(--easy-dark); color: white; }
+        .btn-mid { background: var(--mid-dark); color: #333; }
+        .btn-hard { background: var(--hard-dark); color: white; }
+        .btn-reset { background: #6c757d; color: white; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Konnichiwa, KT! 👋</h1>
+    <p>Tap card to flip, then sort it into a category.</p>
+</div>
+
+<div class="stats">
+    <div id="stat-all" class="stat-box active" onclick="filterCards('all')" style="background: #eee;">All (<span id="count-all">0</span>)</div>
+    <div id="stat-easy" class="stat-box" onclick="filterCards('easy')" style="background: var(--easy);">Easy (<span id="count-easy">0</span>)</div>
+    <div id="stat-mid" class="stat-box" onclick="filterCards('mid')" style="background: var(--mid);">Mid (<span id="count-mid">0</span>)</div>
+    <div id="stat-hard" class="stat-box" onclick="filterCards('hard')" style="background: var(--hard);">Hard (<span id="count-hard">0</span>)</div>
+</div>
+
+<div class="card-container">
+    <div class="card" id="kanjiCard" onclick="this.classList.toggle('flipped')">
+        <div class="card-face card-front">
+            <div class="kanji" id="display-kanji">日</div>
+            <div style="margin-top: 20px; color: #999;">Click to see meaning</div>
+        </div>
+        <div class="card-face card-back">
+            <div class="reading"><strong>On:</strong> <span id="display-on">nichi</span></div>
+            <div class="reading"><strong>Kun:</strong> <span id="display-kun">hi</span></div>
+            <hr style="width: 80%;">
+            <div class="meaning" id="display-meaning">Day, Sun</div>
+        </div>
+    </div>
+</div>
+
+<div class="controls">
+    <button class="btn-hard" onclick="sortCard('hard')">Hard</button>
+    <button class="btn-mid" onclick="sortCard('mid')">Mid</button>
+    <button class="btn-easy" onclick="sortCard('easy')">Easy</button>
+</div>
+
+<button class="btn-reset" onclick="resetApp()">Reset All Progress</button>
+
+<script>
+    const kanjiData = [
+        {k:"日", o:"nichi, jitsu", ku:"hi, -bi, -ka", m:"day, sun, Japan"},
+        {k:"一", o:"ichi", ku:"hito(tsu)", m:"one"},
+        {k:"国", o:"koku", ku:"kuni", m:"country"},
+        {k:"人", o:"jin, nin", ku:"hito", m:"person"},
+        {k:"年", o:"nen", ku:"toshi", m:"year"},
+        {k:"大", o:"dai, tai", ku:"oo(kii)", m:"large, big"},
+        {k:"十", o:"juu", ku:"tou, to", m:"ten"},
+        {k:"二", o:"ni, ji", ku:"futa(tsu)", m:"two"},
+        {k:"本", o:"hon", ku:"moto", m:"book, origin"},
+        {k:"中", o:"chuu", ku:"naka, uchi", m:"in, middle"},
+        {k:"長", o:"chou", ku:"nagai", m:"long, leader"},
+        {k:"出", o:"shutsu", ku:"deru, dasu", m:"exit, leave"},
+        {k:"三", o:"san", ku:"mi(tsu)", m:"three"},
+        {k:"時", o:"ji", ku:"toki", m:"time, hour"},
+        {k:"行", o:"kou, gyou", ku:"iku, okonau", m:"go, carry out"},
+        {k:"見", o:"ken", ku:"miru, miseru", m:"see, look"},
+        {k:"月", o:"getsu, gatsu", ku:"tsuki", m:"month, moon"},
+        {k:"分", o:"bun, fun", ku:"wakeru", m:"part, minute, understand"},
+        {k:"後", o:"go, kou", ku:"nochi, ushiro", m:"behind, later"},
+        {k:"前", o:"zen", ku:"mae", m:"front, before"},
+        {k:"生", o:"sei, shou", ku:"ikiru, umu", m:"life, birth"},
+        {k:"五", o:"go", ku:"itsu(tsu)", m:"five"},
+        {k:"間", o:"kan, ken", ku:"aida, ma", m:"interval, space"},
+        {k:"上", o:"jou", ku:"ue, ageru", m:"above, up"},
+        {k:"東", o:"tou", ku:"higashi", m:"east"},
+        {k:"四", o:"shi", ku:"yon, yotsu", m:"four"},
+        {k:"今", o:"kon, kin", ku:"ima", m:"now"},
+        {k:"金", o:"kin, kon", ku:"kane", m:"gold, money"},
+        {k:"九", o:"kyuu, ku", ku:"kokonotsu", m:"nine"},
+        {k:"入", o:"nyuu", ku:"iru, hairu", m:"enter, insert"},
+        {k:"学", o:"gaku", ku:"manabu", m:"study, learning"},
+        {k:"高", o:"kou", ku:"takai", m:"high, expensive"},
+        {k:"円", o:"en", ku:"marui", m:"circle, yen"},
+        {k:"子", o:"shi, su", ku:"ko", m:"child"},
+        {k:"外", o:"gai, ge", ku:"soto, hoka", m:"outside"},
+        {k:"八", o:"hachi", ku:"yatsu", m:"eight"},
+        {k:"六", o:"roku", ku:"mutsu", m:"six"},
+        {k:"下", o:"ka, ge", ku:"shita, sageru", m:"below, down"},
+        {k:"来", o:"rai", ku:"kuru", m:"come"},
+        {k:"気", o:"ki, ke", ku:"iki", m:"spirit, mood"},
+        {k:"小", o:"shou", ku:"chiisai", m:"small"},
+        {k:"七", o:"shichi", ku:"nanatsu", m:"seven"},
+        {k:"山", o:"san", ku:"yama", m:"mountain"},
+        {k:"話", o:"wa", ku:"hanasu", m:"talk, tale"},
+        {k:"女", o:"jo", ku:"onna", m:"woman"},
+        {k:"北", o:"hoku", ku:"kita", m:"north"},
+        {k:"午", o:"go", ku:"uma", m:"noon"},
+        {k:"百", o:"hyaku", ku:"momo", m:"hundred"},
+        {k:"書", o:"sho", ku:"kaku", m:"write"},
+        {k:"先", o:"sen", ku:"saki", m:"ahead, previous"},
+        {k:"名", o:"mei, myou", ku:"na", m:"name"},
+        {k:"川", o:"sen", ku:"kawa", m:"river"},
+        {k:"千", o:"sen", ku:"chi", m:"thousand"},
+        {k:"水", o:"sui", ku:"mizu", m:"water"},
+        {k:"半", o:"han", ku:"nakaba", m:"half"},
+        {k:"男", o:"dan, nan", ku:"otoko", m:"man"},
+        {k:"西", o:"sei, sai", ku:"nishi", m:"west"},
+        {k:"電", o:"den", ku:"-", m:"electricity"},
+        {k:"校", o:"kou", ku:"-", m:"school"},
+        {k:"語", o:"go", ku:"kataru", m:"language, word"},
+        {k:"土", o:"do, to", ku:"tsuchi", m:"soil, earth"},
+        {k:"木", o:"boku, moku", ku:"ki", m:"tree"},
+        {k:"聞", o:"bun, mon", ku:"kiku", m:"hear, ask"},
+        {k:"食", o:"shoku", ku:"taberu", m:"eat, food"},
+        {k:"車", o:"sha", ku:"kuruma", m:"car, wheel"},
+        {k:"何", o:"ka", ku:"nani, nan", m:"what"},
+        {k:"南", o:"nan, na", ku:"minami", m:"south"},
+        {k:"万", o:"man", ku:"-", m:"10,000"},
+        {k:"毎", o:"mai", ku:"goto", m:"every"},
+        {k:"白", o:"haku", ku:"shiroi", m:"white"},
+        {k:"天", o:"ten", ku:"amatsu", m:"heaven, sky"},
+        {k:"母", o:"bo", ku:"haha", m:"mother"},
+        {k:"火", o:"ka", ku:"hi", m:"fire"},
+        {k:"右", o:"u, yuu", ku:"migi", m:"right"},
+        {k:"読", o:"doku", ku:"yomu", m:"read"},
+        {k:"友", o:"yuu", ku:"tomo", m:"friend"},
+        {k:"左", o:"sa", ku:"hidari", m:"left"},
+        {k:"休", o:"kyuu", ku:"yasumu", m:"rest"},
+        {k:"父", o:"fu", ku:"chichi", m:"father"},
+        {k:"雨", o:"u", ku:"ame", m:"rain"}
+    ];
+
+    let currentFilter = 'all';
+    let currentIndex = 0;
+    let userProgress = JSON.parse(localStorage.getItem('kanjiProgress')) || {};
+
+    function updateStats() {
+        const counts = { all: kanjiData.length, easy: 0, mid: 0, hard: 0 };
+        Object.values(userProgress).forEach(status => counts[status]++);
+        document.getElementById('count-all').innerText = counts.all;
+        document.getElementById('count-easy').innerText = counts.easy;
+        document.getElementById('count-mid').innerText = counts.mid;
+        document.getElementById('count-hard').innerText = counts.hard;
+    }
+
+    function getFilteredList() {
+        if (currentFilter === 'all') return kanjiData;
+        return kanjiData.filter(item => userProgress[item.k] === currentFilter);
+    }
+
+    function displayCard() {
+        const list = getFilteredList();
+        const card = document.getElementById('kanjiCard');
+        card.classList.remove('flipped');
+        
+        if (list.length === 0) {
+            document.getElementById('display-kanji').innerText = "🎉";
+            document.getElementById('display-meaning').innerText = "Empty Category";
+            return;
+        }
+
+        if (currentIndex >= list.length) currentIndex = 0;
+        const item = list[currentIndex];
+        document.getElementById('display-kanji').innerText = item.k;
+        document.getElementById('display-on').innerText = item.o;
+        document.getElementById('display-kun').innerText = item.ku;
+        document.getElementById('display-meaning').innerText = item.m;
+    }
+
+    function sortCard(level) {
+        const list = getFilteredList();
+        if (list.length === 0) return;
+        
+        const kanji = list[currentIndex].k;
+        userProgress[kanji] = level;
+        localStorage.setItem('kanjiProgress', JSON.stringify(userProgress));
+        
+        currentIndex++;
+        updateStats();
+        displayCard();
+    }
+
+    function filterCards(level) {
+        currentFilter = level;
+        currentIndex = 0;
+        document.querySelectorAll('.stat-box').forEach(b => b.classList.remove('active'));
+        document.getElementById(`stat-${level}`).classList.add('active');
+        displayCard();
+    }
+
+    function resetApp() {
+        if(confirm("KT, are you sure you want to clear your progress?")) {
+            userProgress = {};
+            localStorage.removeItem('kanjiProgress');
+            updateStats();
+            filterCards('all');
+        }
+    }
+
+    updateStats();
+    displayCard();
+</script>
+</body>
+</html>
