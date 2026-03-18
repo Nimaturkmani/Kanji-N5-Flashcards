@@ -1,55 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KT's Kanji Study</title>
+    <title>KT's Kanji Trainer</title>
     <style>
         :root {
             --easy: #d4edda; --mid: #fff3cd; --hard: #f8d7da;
             --easy-dark: #28a745; --mid-dark: #ffc107; --hard-dark: #dc3545;
         }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .header { text-align: center; margin-bottom: 15px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .header { text-align: center; margin-bottom: 10px; }
         
-        /* Stats Bar */
-        .stats { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
-        .stat-box { padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; border: 2px solid transparent; transition: 0.3s; font-size: 14px; }
-        .stat-box.active { border-color: #333; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        
-        /* Card Container */
+        .stats { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; justify-content: center; }
+        .stat-box { padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; border: 2px solid transparent; font-size: 13px; transition: 0.2s; }
+        .stat-box.active { border-color: #333; transform: scale(1.05); }
+
+        /* Mode Toggle Button */
+        .mode-toggle { margin-bottom: 15px; padding: 10px 20px; border-radius: 20px; border: 2px solid #007bff; background: white; color: #007bff; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .mode-toggle:hover { background: #007bff; color: white; }
+
         .card-container { width: 320px; height: 380px; perspective: 1000px; margin-bottom: 10px; }
         .card { width: 100%; height: 100%; position: relative; transition: transform 0.5s; transform-style: preserve-3d; cursor: pointer; }
         .card.flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); padding: 20px; box-sizing: border-box; text-align: center; background: white; border: 1px solid #eee; }
-        .card-back { transform: rotateY(180deg); background: #fafafa; }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 20px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); padding: 25px; box-sizing: border-box; text-align: center; background: white; border: 1px solid #ddd; }
+        .card-back { transform: rotateY(180deg); background: #fdfdfd; }
         
-        .kanji { font-size: 100px; margin: 0; color: #222; }
-        .label { font-size: 11px; text-transform: uppercase; color: #aaa; margin-bottom: 2px; }
-        .reading { font-size: 17px; margin-bottom: 10px; font-weight: 500; }
-        .meaning { font-size: 24px; font-weight: bold; color: #333; margin-top: 5px; }
+        .display-main { font-size: 80px; margin: 0; color: #222; font-weight: bold; }
+        .display-sub { font-size: 32px; font-weight: bold; color: #333; margin: 10px 0; }
+        .label { font-size: 10px; text-transform: uppercase; color: #aaa; margin-top: 10px; }
+        .reading { font-size: 18px; color: #444; margin-bottom: 8px; }
 
-        /* Navigation Arrows (Under Card) */
-        .nav-row { display: flex; gap: 20px; margin-bottom: 20px; width: 320px; justify-content: space-between; }
-        .nav-btn { background: #fff; border: 1px solid #ddd; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-size: 18px; flex: 1; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .nav-btn:hover { background: #f8f8f8; border-color: #bbb; }
-
-        /* Sorting Buttons (Bottom) */
+        .nav-row { display: flex; gap: 15px; margin-bottom: 15px; width: 320px; }
+        .nav-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; background: white; cursor: pointer; font-size: 16px; }
+        
         .sort-row { display: flex; gap: 8px; width: 320px; }
-        button.sort { flex: 1; padding: 15px 5px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; font-size: 14px; }
+        .sort { flex: 1; padding: 15px 5px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; font-size: 14px; }
         .btn-easy { background: var(--easy-dark); }
         .btn-mid { background: var(--mid-dark); color: #333; }
         .btn-hard { background: var(--hard-dark); }
         
-        .reset-link { margin-top: 40px; color: #bbb; text-decoration: none; cursor: pointer; font-size: 12px; }
-        .reset-link:hover { color: #888; text-decoration: underline; }
+        .reset { margin-top: 30px; font-size: 12px; color: #999; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>KT's Kanji Study 👋</h1>
-    <p id="progress-text" style="color: #666; font-size: 14px;">Initializing...</p>
+    <h1>KT's Kanji Study 🇯🇵</h1>
+    <p id="progress-text" style="font-size: 14px; color: #666;">Bereit?</p>
 </div>
 
 <div class="stats">
@@ -59,26 +57,30 @@
     <div id="stat-hard" class="stat-box" onclick="filterCards('hard')" style="background: var(--hard);">Hard (<span id="count-hard">0</span>)</div>
 </div>
 
+<button class="mode-toggle" onclick="toggleMode()">
+    Modus: <span id="current-mode">Kanji → Deutsch</span>
+</button>
+
 <div class="card-container">
     <div class="card" id="kanjiCard" onclick="this.classList.toggle('flipped')">
-        <div class="card-face card-front">
-            <div class="kanji" id="display-kanji">-</div>
-            <div style="margin-top: 20px; font-size: 11px; color: #ccc; letter-spacing: 1px;">CLICK TO FLIP</div>
+        <div class="card-face card-front" id="front-content">
+            <div class="display-main" id="q-main">-</div>
+            <div style="margin-top: 20px; font-size: 10px; color: #ccc;">UMDREHEN</div>
         </div>
-        <div class="card-face card-back">
-            <div class="label">Onyomi (Chinese)</div>
-            <div class="reading" id="display-on">-</div>
-            <div class="label">Kunyomi (Japanese)</div>
-            <div class="reading" id="display-kun">-</div>
-            <div style="width: 50%; height: 1px; background: #ddd; margin: 10px 0;"></div>
-            <div class="meaning" id="display-meaning">-</div>
+        <div class="card-face card-back" id="back-content">
+            <div id="ans-area">
+                <div class="label" id="label-top">Onyomi / Kunyomi</div>
+                <div class="reading" id="display-readings">-</div>
+                <div style="width: 50px; height: 2px; background: #eee; margin: 15px auto;"></div>
+                <div class="display-sub" id="a-main">-</div>
+            </div>
         </div>
     </div>
 </div>
 
 <div class="nav-row">
-    <button class="nav-btn" onclick="moveIndex(-1)">← Before</button>
-    <button class="nav-btn" onclick="moveIndex(1)">Next →</button>
+    <button class="nav-btn" onclick="moveIndex(-1)">← Zurück</button>
+    <button class="nav-btn" onclick="moveIndex(1)">Weiter →</button>
 </div>
 
 <div class="sort-row">
@@ -87,95 +89,102 @@
     <button class="sort btn-easy" onclick="sortCurrent('easy')">Easy</button>
 </div>
 
-<div class="reset-link" onclick="resetApp()">Reset session data</div>
+<div class="reset" onclick="resetApp()">Daten löschen & Neustart</div>
 
 <script>
     const fullData = [
-        {k:"日", o:"nichi, jitsu", ku:"hi, -bi, -ka", m:"day, sun"},
-        {k:"一", o:"ichi", ku:"hito(tsu)", m:"one"},
-        {k:"国", o:"koku", ku:"kuni", m:"country"},
-        {k:"人", o:"jin, nin", ku:"hito", m:"person"},
-        {k:"年", o:"nen", ku:"toshi", m:"year"},
-        {k:"大", o:"dai, tai", ku:"oo(kii)", m:"large, big"},
-        {k:"十", o:"juu", ku:"tou, to", m:"ten"},
-        {k:"二", o:"ni, ji", ku:"futa(tsu)", m:"two"},
-        {k:"本", o:"hon", ku:"moto", m:"book, origin"},
-        {k:"中", o:"chuu", ku:"naka, uchi", m:"in, middle"},
-        {k:"長", o:"chou", ku:"nagai", m:"long, leader"},
-        {k:"出", o:"shutsu", ku:"deru, dasu", m:"exit"},
-        {k:"三", o:"san", ku:"mi(tsu)", m:"three"},
-        {k:"時", o:"ji", ku:"toki", m:"time, hour"},
-        {k:"行", o:"kou", ku:"iku, okonau", m:"go, row"},
-        {k:"見", o:"ken", ku:"miru", m:"see, look"},
-        {k:"月", o:"getsu", ku:"tsuki", m:"month, moon"},
-        {k:"分", o:"bun, fun", ku:"wakeru", m:"part, minute"},
-        {k:"後", o:"go, kou", ku:"nochi, ushiro", m:"after, behind"},
-        {k:"前", o:"zen", ku:"mae", m:"before, front"},
-        {k:"生", o:"sei, shou", ku:"ikiru, umu", m:"life, birth"},
-        {k:"五", o:"go", ku:"itsutsu", m:"five"},
-        {k:"間", o:"kan, ken", ku:"aida, ma", m:"interval"},
-        {k:"上", o:"jou", ku:"ue, ageru", m:"above, up"},
-        {k:"東", o:"tou", ku:"higashi", m:"east"},
-        {k:"四", o:"shi", ku:"yon", m:"four"},
-        {k:"今", o:"kon", ku:"ima", m:"now"},
-        {k:"金", o:"kin", ku:"kane", m:"gold, money"},
-        {k:"九", o:"kyuu", ku:"kokonotsu", m:"nine"},
-        {k:"入", o:"nyuu", ku:"hairu", m:"enter"},
-        {k:"学", o:"gaku", ku:"manabu", m:"study"},
-        {k:"高", o:"kou", ku:"takai", m:"tall, high"},
-        {k:"円", o:"en", ku:"marui", m:"circle, yen"},
-        {k:"子", o:"shi, su", ku:"ko", m:"child"},
-        {k:"外", o:"gai, ge", ku:"soto, hoka", m:"outside"},
-        {k:"八", o:"hachi", ku:"yatsu", m:"eight"},
-        {k:"六", o:"roku", ku:"mutsu", m:"six"},
-        {k:"下", o:"ka, ge", ku:"shita", m:"below, down"},
-        {k:"来", o:"rai", ku:"kuru", m:"come"},
-        {k:"気", o:"ki, ke", ku:"iki", m:"spirit, air"},
-        {k:"小", o:"shou", ku:"chiisai", m:"small"},
-        {k:"七", o:"shichi", ku:"nanatsu", m:"seven"},
-        {k:"山", o:"san", ku:"yama", m:"mountain"},
-        {k:"話", o:"wa", ku:"hanasu", m:"talk, tale"},
-        {k:"女", o:"jo", ku:"onna", m:"woman"},
-        {k:"北", o:"hoku", ku:"kita", m:"north"},
-        {k:"午", o:"go", ku:"uma", m:"noon"},
-        {k:"百", o:"hyaku", ku:"momo", m:"hundred"},
-        {k:"書", o:"sho", ku:"kaku", m:"write"},
-        {k:"先", o:"sen", ku:"saki", m:"ahead"},
-        {k:"名", o:"mei, myou", ku:"na", m:"name"},
-        {k:"川", o:"sen", ku:"kawa", m:"river"},
-        {k:"千", o:"sen", ku:"chi", m:"thousand"},
-        {k:"水", o:"sui", ku:"mizu", m:"water"},
-        {k:"半", o:"han", ku:"nakaba", m:"half"},
-        {k:"男", o:"dan, nan", ku:"otoko", m:"man"},
-        {k:"西", o:"sei, sai", ku:"nishi", m:"west"},
-        {k:"電", o:"den", ku:"-", m:"electricity"},
-        {k:"校", o:"kou", ku:"-", m:"school"},
-        {k:"語", o:"go", ku:"kataru", m:"language"},
-        {k:"土", o:"do, to", ku:"tsuchi", m:"soil, earth"},
-        {k:"木", o:"boku, moku", ku:"ki", m:"tree, wood"},
-        {k:"聞", o:"bun, mon", ku:"kiku", m:"hear, ask"},
-        {k:"食", o:"shoku", ku:"taberu", m:"eat, food"},
-        {k:"車", o:"sha", ku:"kuruma", m:"car, wheel"},
-        {k:"何", o:"ka", ku:"nani", m:"what"},
-        {k:"南", o:"nan, na", ku:"minami", m:"south"},
-        {k:"万", o:"man", ku:"-", m:"10,000"},
-        {k:"毎", o:"mai", ku:"goto", m:"every"},
-        {k:"白", o:"haku", ku:"shiroi", m:"white"},
-        {k:"天", o:"ten", ku:"amatsu", m:"heaven"},
-        {k:"母", o:"bo", ku:"haha", m:"mother"},
-        {k:"火", o:"ka", ku:"hi", m:"fire"},
-        {k:"右", o:"u", ku:"migi", m:"right"},
-        {k:"読", o:"doku", ku:"yomu", m:"read"},
-        {k:"友", o:"yuu", ku:"tomo", m:"friend"},
-        {k:"左", o:"sa", ku:"hidari", m:"left"},
-        {k:"休", o:"kyuu", ku:"yasumu", m:"rest"},
-        {k:"父", o:"fu", ku:"chichi", m:"father"},
-        {k:"雨", o:"u", ku:"ame", m:"rain"}
+        {k:"日", o:"nichi, jitsu", ku:"hi, -bi, -ka", m:"Tag, Sonne"},
+        {k:"一", o:"ichi", ku:"hito(tsu)", m:"Eins"},
+        {k:"国", o:"koku", ku:"kuni", m:"Land"},
+        {k:"人", o:"jin, nin", ku:"hito", m:"Person"},
+        {k:"年", o:"nen", ku:"toshi", m:"Jahr"},
+        {k:"大", o:"dai, tai", ku:"oo(kii)", m:"Groß"},
+        {k:"十", o:"juu", ku:"tou, to", m:"Zehn"},
+        {k:"二", o:"ni, ji", ku:"futa(tsu)", m:"Zwei"},
+        {k:"本", o:"hon", ku:"moto", m:"Buch, Ursprung"},
+        {k:"中", o:"chuu", ku:"naka, uchi", m:"Mitte, Innen"},
+        {k:"長", o:"chou", ku:"nagai", m:"Lang, Chef"},
+        {k:"出", o:"shutsu", ku:"deru, dasu", m:"Ausgang"},
+        {k:"三", o:"san", ku:"mi(tsu)", m:"Drei"},
+        {k:"時", o:"ji", ku:"toki", m:"Zeit, Stunde"},
+        {k:"行", o:"kou", ku:"iku, okonau", m:"Gehen, Zeile"},
+        {k:"見", o:"ken", ku:"miru", m:"Sehen, Blick"},
+        {k:"月", o:"getsu", ku:"tsuki", m:"Monat, Mond"},
+        {k:"分", o:"bun, fun", ku:"wakeru", m:"Teil, Minute"},
+        {k:"後", o:"go, kou", ku:"nochi, ushiro", m:"Hinter, Später"},
+        {k:"前", o:"zen", ku:"mae", m:"Vorne, Vor"},
+        {k:"生", o:"sei", ku:"ikiru, umu", m:"Leben, Geburt"},
+        {k:"五", o:"go", ku:"itsutsu", m:"Fünf"},
+        {k:"間", o:"kan, ken", ku:"aida, ma", m:"Intervall, Raum"},
+        {k:"上", o:"jou", ku:"ue, ageru", m:"Oben, Auf"},
+        {k:"東", o:"tou", ku:"higashi", m:"Osten"},
+        {k:"四", o:"shi", ku:"yon", m:"Vier"},
+        {k:"今", o:"kon", ku:"ima", m:"Jetzt"},
+        {k:"金", o:"kin", ku:"kane", m:"Gold, Geld"},
+        {k:"九", o:"kyuu", ku:"kokonotsu", m:"Neun"},
+        {k:"入", o:"nyuu", ku:"hairu", m:"Eintreten"},
+        {k:"学", o:"gaku", ku:"manabu", m:"Lernen, Schule"},
+        {k:"高", o:"kou", ku:"takai", m:"Hoch, Teuer"},
+        {k:"円", o:"en", ku:"marui", m:"Kreis, Yen"},
+        {k:"子", o:"shi, su", ku:"ko", m:"Kind"},
+        {k:"外", o:"gai", ku:"soto", m:"Außen"},
+        {k:"八", o:"hachi", ku:"yatsu", m:"Acht"},
+        {k:"六", o:"roku", ku:"mutsu", m:"Sechs"},
+        {k:"下", o:"ka, ge", ku:"shita", m:"Unten"},
+        {k:"来", o:"rai", ku:"kuru", m:"Kommen"},
+        {k:"気", o:"ki, ke", ku:"iki", m:"Geist, Luft"},
+        {k:"小", o:"shou", ku:"chiisai", m:"Klein"},
+        {k:"七", o:"shichi", ku:"nanatsu", m:"Sieben"},
+        {k:"山", o:"san", ku:"yama", m:"Berg"},
+        {k:"話", o:"wa", ku:"hanasu", m:"Sprechen"},
+        {k:"女", o:"jo", ku:"onna", m:"Frau"},
+        {k:"北", o:"hoku", ku:"kita", m:"Norden"},
+        {k:"午", o:"go", ku:"uma", m:"Mittag"},
+        {k:"百", o:"hyaku", ku:"momo", m:"Hundert"},
+        {k:"書", o:"sho", ku:"kaku", m:"Schreiben"},
+        {k:"先", o:"sen", ku:"saki", m:"Früher, Voraus"},
+        {k:"名", o:"mei", ku:"na", m:"Name"},
+        {k:"川", o:"sen", ku:"kawa", m:"Fluss"},
+        {k:"千", o:"sen", ku:"chi", m:"Tausend"},
+        {k:"水", o:"sui", ku:"mizu", m:"Wasser"},
+        {k:"半", o:"han", ku:"nakaba", m:"Halb"},
+        {k:"男", o:"dan, nan", ku:"otoko", m:"Mann"},
+        {k:"西", o:"sei, sai", ku:"nishi", m:"Westen"},
+        {k:"電", o:"den", ku:"-", m:"Elektrizität"},
+        {k:"校", o:"kou", ku:"-", m:"Schule"},
+        {k:"語", o:"go", ku:"kataru", m:"Sprache, Wort"},
+        {k:"土", o:"do, to", ku:"tsuchi", m:"Erde, Boden"},
+        {k:"木", o:"boku, moku", ku:"ki", m:"Baum, Holz"},
+        {k:"聞", o:"bun, mon", ku:"kiku", m:"Hören, Fragen"},
+        {k:"食", o:"shoku", ku:"taberu", m:"Essen"},
+        {k:"車", o:"sha", ku:"kuruma", m:"Auto, Rad"},
+        {k:"何", o:"ka", ku:"nani", m:"Was"},
+        {k:"南", o:"nan, na", ku:"minami", m:"Süden"},
+        {k:"万", o:"man", ku:"-", m:"10.000"},
+        {k:"毎", o:"mai", ku:"goto", m:"Jede(r)"},
+        {k:"白", o:"haku", ku:"shiroi", m:"Weiß"},
+        {k:"天", o:"ten", ku:"amatsu", m:"Himmel"},
+        {k:"母", o:"bo", ku:"haha", m:"Mutter"},
+        {k:"火", o:"ka", ku:"hi", m:"Feuer"},
+        {k:"右", o:"u", ku:"migi", m:"Rechts"},
+        {k:"読", o:"doku", ku:"yomu", m:"Lesen"},
+        {k:"友", o:"yuu", ku:"tomo", m:"Freund"},
+        {k:"左", o:"sa", ku:"hidari", m:"Links"},
+        {k:"休", o:"kyuu", ku:"yasumu", m:"Pause, Ruhe"},
+        {k:"父", o:"fu", ku:"chichi", m:"Vater"},
+        {k:"雨", o:"u", ku:"ame", m:"Regen"}
     ];
 
-    let userProgress = JSON.parse(localStorage.getItem('kanjiSortProgress')) || {};
+    let userProgress = JSON.parse(localStorage.getItem('ktKanjiSave')) || {};
     let currentCategory = 'all';
     let currentIndex = 0;
+    let mode = 'JtoD'; // JtoD = Jap zu Deutsch, DtoJ = Deutsch zu Jap
+
+    function toggleMode() {
+        mode = (mode === 'JtoD') ? 'DtoJ' : 'JtoD';
+        document.getElementById('current-mode').innerText = (mode === 'JtoD') ? "Kanji → Deutsch" : "Deutsch → Kanji";
+        updateDisplay();
+    }
 
     function getList() {
         if (currentCategory === 'all') {
@@ -189,36 +198,45 @@
         const card = document.getElementById('kanjiCard');
         card.classList.remove('flipped');
 
-        // Update Stats Count
+        // Stats Update
         const counts = { all: 0, easy: 0, mid: 0, hard: 0 };
-        fullData.forEach(item => {
-            const status = userProgress[item.k];
-            if (status) counts[status]++;
-            else counts.all++;
-        });
-        
+        fullData.forEach(i => { if(userProgress[i.k]) counts[userProgress[i.k]]++; else counts.all++; });
         document.getElementById('count-all').innerText = counts.all;
         document.getElementById('count-easy').innerText = counts.easy;
         document.getElementById('count-mid').innerText = counts.mid;
         document.getElementById('count-hard').innerText = counts.hard;
 
         if (list.length === 0) {
-            document.getElementById('display-kanji').innerText = "🎌";
-            document.getElementById('display-meaning').innerText = "Empty Pile";
-            document.getElementById('progress-text').innerText = "Try checking another category!";
+            document.getElementById('q-main').innerText = "🏁";
+            document.getElementById('a-main').innerText = "Fertig!";
+            document.getElementById('display-readings').innerText = "";
             return;
         }
 
-        // Circular navigation
         if (currentIndex >= list.length) currentIndex = 0;
         if (currentIndex < 0) currentIndex = list.length - 1;
 
         const item = list[currentIndex];
-        document.getElementById('display-kanji').innerText = item.k;
-        document.getElementById('display-on').innerText = item.o;
-        document.getElementById('display-kun').innerText = item.ku;
-        document.getElementById('display-meaning').innerText = item.m;
-        document.getElementById('progress-text').innerText = `Viewing ${currentIndex + 1} of ${list.length}`;
+        
+        if (mode === 'JtoD') {
+            // Vorne: Kanji
+            document.getElementById('q-main').innerText = item.k;
+            document.getElementById('q-main').style.fontSize = "80px";
+            // Hinten: Lesung + Bedeutung
+            document.getElementById('display-readings').innerText = `${item.o} / ${item.ku}`;
+            document.getElementById('a-main').innerText = item.m;
+            document.getElementById('label-top').innerText = "Lesungen";
+        } else {
+            // Vorne: Bedeutung (Deutsch)
+            document.getElementById('q-main').innerText = item.m;
+            document.getElementById('q-main').style.fontSize = "40px";
+            // Hinten: Kanji + Lesung
+            document.getElementById('display-readings').innerText = `${item.o} / ${item.ku}`;
+            document.getElementById('a-main').innerText = item.k;
+            document.getElementById('label-top').innerText = "Lesungen & Kanji";
+        }
+        
+        document.getElementById('progress-text').innerText = `Karte ${currentIndex + 1} von ${list.length}`;
     }
 
     function moveIndex(dir) {
@@ -229,12 +247,8 @@
     function sortCurrent(level) {
         const list = getList();
         if (list.length === 0) return;
-
-        const kanji = list[currentIndex].k;
-        userProgress[kanji] = level;
-        localStorage.setItem('kanjiSortProgress', JSON.stringify(userProgress));
-        
-        // After sorting, the card disappears from 'all', so we refresh
+        userProgress[list[currentIndex].k] = level;
+        localStorage.setItem('ktKanjiSave', JSON.stringify(userProgress));
         updateDisplay();
     }
 
@@ -247,9 +261,9 @@
     }
 
     function resetApp() {
-        if(confirm("KT, clear all categories and return to the Inbox?")) {
+        if(confirm("KT, wirklich alles löschen?")) {
             userProgress = {};
-            localStorage.removeItem('kanjiSortProgress');
+            localStorage.removeItem('ktKanjiSave');
             filterCards('all');
         }
     }
